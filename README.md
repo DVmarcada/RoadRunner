@@ -2,7 +2,7 @@
 
 A browser endless-runner: dodge road obstacles in a BMW 550i or a Nissan Cube.
 
-Live app: (add your Vercel link here)
+Live app: (https://roadrunner-dvas.vercel.app/)
 
 ## Features
 
