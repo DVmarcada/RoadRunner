@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Road Runner: 550i vs Cube</title>
+<style>
+:root{--bg:#f4f4f2;--fg:#222;--card:#fff;--line:#ccc;--accent:#2b6cb0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1c1e;--fg:#eee;--card:#2a2a2d;--line:#444;--accent:#63a4ff}}
+:root[data-theme="dark"]{--bg:#1c1c1e;--fg:#eee;--card:#2a2a2d;--line:#444;--accent:#63a4ff}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+[hidden]{display:none!important}
+main{max-width:820px;margin:0 auto;padding:16px;text-align:center}
+#stage{position:relative}
+canvas{width:100%;max-width:800px;height:auto;background:#f7f7f7;border:2px solid var(--line);border-radius:8px;touch-action:manipulation;display:block;margin:0 auto}
+button{font:inherit;padding:10px 16px;border-radius:8px;border:2px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button.sel{border-color:var(--accent);outline:2px solid var(--accent)}
+button.big{font-size:1.1rem;padding:14px 30px;min-width:240px;background:var(--accent);color:#fff;border-color:var(--accent)}
+button.danger{color:#d33}
+p{margin:8px 0;font-size:.9rem;opacity:.85}
+.hudbtns{display:flex;gap:10px;justify-content:center;margin:10px 0}
+.logo{font-size:2rem;letter-spacing:.14em;font-weight:800;margin:12px 0 2px;text-align:center}
+.tag{opacity:.7;margin:0 0 6px;text-align:center}
+.best{font-family:monospace;opacity:.7;margin:8px 0;text-align:center}
+.menu-btns{display:flex;flex-direction:column;gap:12px;align-items:center;margin:16px 0}
+.menu-btns button{width:min(320px,90%)}
+.hint{font-size:.85rem;text-align:center}
+.credit{text-align:center;font-size:.85rem;opacity:.75;margin:0 0 4px}
+.panel{margin-top:14px;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:16px;text-align:left}
+.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+.panel-head h2{margin:0;font-size:1.2rem}
+.car-pick,.maps-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.maps-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.card{display:block;text-align:left;width:100%;padding:8px}
+.card b{display:block}
+.card small{display:block;opacity:.7;margin-top:2px}
+.card canvas{border-width:1px;margin:0 0 6px;border-radius:6px}
+#gpv{margin:6px 0 12px}
+.group{margin:12px 0}
+.group h3{margin:0 0 6px;font-size:.95rem}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sw{width:34px;height:34px;padding:0;border-radius:50%;border:2px solid var(--line)}
+.sw.sel{outline:3px solid var(--accent);outline-offset:2px}
+input[type=color]{width:42px;height:34px;padding:0;border:2px solid var(--line);border-radius:8px;background:none;cursor:pointer}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{padding:7px 12px;font-size:.9rem}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+/* cutscene */
+#cine{position:absolute;inset:0;display:none;pointer-events:none;overflow:hidden}
+.lb{position:absolute;left:0;right:0;height:0;background:#000;transition:height .9s ease}
+#lbt{top:0}#lbb{bottom:0}
+#cap{position:absolute;left:0;right:0;bottom:15%;text-align:center;color:#fff;text-shadow:0 2px 14px #000;text-transform:uppercase;letter-spacing:.2em;font-weight:300}
+#cap b{display:block;font-size:clamp(20px,4.2vw,46px);font-weight:800;letter-spacing:.3em}
+#cap span{display:block;font-size:clamp(11px,1.9vw,17px);opacity:.85;letter-spacing:.25em;margin-top:6px}
+.lc{text-transform:none;font-style:normal}
+#cap .cr{margin-top:22px;font-size:clamp(10px,1.5vw,13px);opacity:.6;letter-spacing:.15em}
+#cap.big b{font-size:clamp(34px,9vw,96px);letter-spacing:.12em}
+#cap.in{animation:capIn 1.1s ease both}
+@keyframes capIn{from{opacity:0;transform:translateY(14px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+#flash{position:absolute;inset:0;background:#fff;opacity:0}
+#flash.go{animation:fl .5s ease-out}
+@keyframes fl{from{opacity:.8}to{opacity:0}}
+#skip{position:absolute;right:3%;bottom:2.5%;pointer-events:auto;background:rgba(0,0,0,.45);color:#fff;border:1px solid #888;font-size:.8rem;padding:6px 12px}
+body.cine{background:#000}
+body.cine main{position:fixed;inset:0;max-width:none;padding:0;display:flex;align-items:center;justify-content:center;background:#000}
+body.cine #cine{display:block}
+body.cine .lb{height:11%}
+body.cine #stage{width:min(100vw,calc(100vh*8/3))}
+body.cine canvas{border:0;border-radius:0;max-width:none}
+body.cine #panel,body.cine #hudbtns,body.cine .hint{display:none}
+</style>
+</head>
+<body>
+<main>
+ <div id="stage">
+  <canvas id="c" width="800" height="300"></canvas>
+  <div id="cine">
+    <div class="lb" id="lbt"></div>
+    <div class="lb" id="lbb"></div>
+    <div id="cap"></div>
+    <div id="flash"></div>
+    <button id="skip">Skip intro ▸</button>
+  </div>
+ </div>
+
+ <div id="hudbtns" class="hudbtns" hidden>
+  <button id="bp">⏸ Pause</button>
+  <button id="bm">☰ Menu</button>
+ </div>
+
+ <div id="panel">
+  <section id="menu" class="panel">
+   <div class="logo">ROAD RUNNER</div>
+   <p class="tag">Dodge the road. Own the road.</p>
+   <p class="credit">Made by Daryan Veerden &amp; Armaan Shaheed</p>
+   <div class="best" id="best">BEST 00000</div>
+   <div class="menu-btns">
+    <button id="m-play" class="big">▶ Play</button>
+    <button data-go="garage">🚘 Garage</button>
+    <button data-go="maps">🗺 Map</button>
+    <button data-go="settings">⚙ Settings</button>
+   </div>
+   <p class="hint">Space / ↑ / tap to jump · P or Esc to pause · 1 / 2 switch cars</p>
+  </section>
+
+  <section id="garage" class="panel" hidden>
+   <div class="panel-head"><h2>🚘 Garage</h2><button data-back>← Back</button></div>
+   <div class="car-pick">
+    <button class="card" data-car="bmw"><b>BMW 550i</b><small>faster, lower jump</small></button>
+    <button class="card" data-car="cube"><b>Nissan Cube</b><small>boxy, floaty jump</small></button>
+   </div>
+   <canvas id="gpv" width="800" height="300"></canvas>
+   <div class="group"><h3>Body paint</h3><div class="swatches" id="sw-body"></div></div>
+   <div class="group"><h3>Window tint</h3><div class="swatches" id="sw-window"></div></div>
+   <div class="group"><h3>Rim color</h3><div class="swatches" id="sw-rim"></div></div>
+   <div class="group"><h3>Wheel style</h3>
+    <div class="seg">
+     <button data-wheel="stock">Stock</button>
+     <button data-wheel="sport">Sport</button>
+     <button data-wheel="turbo">Turbo</button>
+     <button data-wheel="mesh">Mesh</button>
+     <button data-wheel="chrome">Chrome</button>
+     <button data-wheel="classic">Classic</button>
+    </div>
+   </div>
+   <div class="row"><span>Changes save automatically</span><button id="g-reset">Reset this car</button></div>
+  </section>
+
+  <section id="maps" class="panel" hidden>
+   <div class="panel-head"><h2>🗺 Map</h2><button data-back>← Back</button></div>
+   <div class="maps-grid" id="maps-grid"></div>
+   <p class="hint">Changes the look of the road. Your car stays the same.</p>
+  </section>
+
+  <section id="settings" class="panel" hidden>
+   <div class="panel-head"><h2>⚙ Settings</h2><button data-back>← Back</button></div>
+   <div class="row"><span>Difficulty</span>
+    <div class="seg">
+     <button data-set="difficulty" data-val="easy">Easy</button>
+     <button data-set="difficulty" data-val="normal">Normal</button>
+     <button data-set="difficulty" data-val="hard">Hard</button>
+    </div>
+   </div>
+   <div class="row"><span>Sound effects</span>
+    <div class="seg"><button data-set="sound" data-val="on">On</button><button data-set="sound" data-val="off">Off</button></div>
+   </div>
+   <div class="row"><span>Screen shake on crash</span>
+    <div class="seg"><button data-set="shake" data-val="on">On</button><button data-set="shake" data-val="off">Off</button></div>
+   </div>
+   <div class="row"><span>Play intro when opening the site</span>
+    <div class="seg"><button data-set="intro" data-val="on">On</button><button data-set="intro" data-val="off">Off</button></div>
+   </div>
+   <div class="row"><span>Theme</span>
+    <div class="seg">
+     <button data-set="theme" data-val="system">System</button>
+     <button data-set="theme" data-val="light">Light</button>
+     <button data-set="theme" data-val="dark">Dark</button>
+    </div>
+   </div>
+   <div class="row"><span>Replay the intro cutscene</span><button id="set-replay">▶ Play intro</button></div>
+   <div class="row"><span>Reset best score</span><button id="set-rbest" class="danger">Reset</button></div>
+   <div class="row"><span>Reset garage colors and map</span><button id="set-rall" class="danger">Reset</button></div>
+  </section>
+ </div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const cv=$('c'),ctx=cv.getContext('2d'),gctx=$('gpv').getContext('2d');
+const hudBtns=$('hudbtns'),bp=$('bp');
+const W=800,H=300,G=240;
+const clone=o=>JSON.parse(JSON.stringify(o));
+const isObj=v=>v&&typeof v==='object'&&!Array.isArray(v);
+const wrap=(v,p)=>((v%p)+p)%p;
+const pad=n=>String(Math.floor(n)).padStart(5,'0');
+
+/* ---------- data ---------- */
+const CARS={
+ bmw:{hitW:88,hitH:26,jump:560,grav:1900,base:300,acc:9,w:96},
+ cube:{hitW:64,hitH:38,jump:660,grav:1600,base:270,acc:7,w:72}
+};
+const TYPES=[{n:'cone',w:22,h:34},{n:'barrel',w:28,h:38},{n:'barrier',w:50,h:28},{n:'tires',w:32,h:32}];
+const DIFF={easy:{spd:.85,gap:1.25},normal:{spd:1,gap:1},hard:{spd:1.2,gap:.85}};
+const DEFAULT_CUST={
+ bmw:{body:'#1a2747',window:'#3c4b5e',rim:'#c9ccd2',wheel:'stock'},
+ cube:{body:'#b4b8be',window:'#2b3138',rim:'#e4e6e8',wheel:'stock'}
+};
+const BODY_COLORS=['#1a2747','#0b0b0f','#f5f5f5','#c62828','#ef6c00','#fdd835','#2e7d32','#00acc1','#1e88e5','#8e24aa','#b4b8be','#795548'];
+const WINDOW_COLORS=['#3c4b5e','#2b3138','#0b0b0f','#1b1f24','#4a3b57','#6b7f96','#2e4a3f','#7a5c1e'];
+const RIM_COLORS=['#c9ccd2','#e4e6e8','#ffd54f','#ef5350','#42a5f5','#66bb6a','#212121','#ffffff','#ff7043'];
+const MAPS={
+ city:{name:'City Day',desc:'Bright skyline, clear road',shape:'city',sky:['#f7f7f7','#f7f7f7'],far:'#e3e3e3',ground:'#555',stripe:'#333',dash:'#ddd',text:'#222'},
+ sunset:{name:'Sunset Boulevard',desc:'Warm sky and a glowing sun',shape:'city',sky:['#ffd7a8','#ff8f7a'],sun:{x:640,y:86,r:40,c:'#ffe7b0'},far:'#9c4f6e',ground:'#4a3350',stripe:'#2a1d33',dash:'#ffc27a',text:'#2a1d33'},
+ night:{name:'Neon Night',desc:'Stars, lit windows, neon lines',shape:'city',night:true,sky:['#070b1e','#1b2550'],far:'#1d2a4d',ground:'#1e1e26',stripe:'#0b0b10',dash:'#ff4fd8',text:'#f2f2f2'},
+ desert:{name:'Desert Run',desc:'Mesas, dust and a hot sun',shape:'mesa',sky:['#8fd3f4','#fbe6b8'],sun:{x:150,y:70,r:30,c:'#fff6cf'},far:'#c57d52',ground:'#d7a46a',stripe:'#8a5a33',dash:'#f6ead0',text:'#222'},
+ snow:{name:'Snow Pass',desc:'Icy road between white peaks',shape:'peak',sky:['#dbe8f5','#ffffff'],far:'#a7b7c9',ground:'#c9d6e3',stripe:'#7f8ea0',dash:'#ffffff',text:'#222'}
+};
+const SCENES=[
+ {end:3,   z:1,   fx:.16,ts:1,  cap:'<b>ONE ROAD.</b>'},
+ {end:6,   z:1.1, fx:.22,ts:1,  cap:'<b>TWO CARS.</b>'},
+ {end:10,  z:1.7, fx:.3, ts:.45,fl:1,cap:'<b>BMW <em class="lc">550i</em></b><span>Faster. Lower. Sharper.</span>'},
+ {end:13.5,z:1.55,fx:.3, ts:.8, fl:1,cap:'<b>NISSAN CUBE</b><span>Boxy. Floaty. Unstoppable.</span>'},
+ {end:14.5,z:1.3, fx:.3, ts:1,  fl:1,cap:'<b>DODGE.</b>'},
+ {end:15.5,z:1.15,fx:.25,ts:1,  fl:1,cap:'<b>DRIFT.</b>'},
+ {end:16.5,z:1.4, fx:.3, ts:.6, fl:1,cap:'<b>DOMINATE.</b>'},
+ {end:20.5,z:1,   fx:.16,ts:1,  fl:1,cap:'<b>CUSTOMIZE</b><span>Paint it. Chrome it. Make it yours.</span>'},
+ {end:24.5,z:1.05,fx:.2, ts:1,  fl:1,cap:'<b>CHOOSE YOUR ROAD</b><span>Five worlds. One goal: survive.</span>'},
+ {end:Infinity,z:1,fx:.16,ts:.4,fl:1,big:1,cap:'<b>ROAD RUNNER</b><span>Tap to start</span><span class="cr">Made by Daryan Veerden &amp; Armaan Shaheed</span>'}
+];
+const TITLE_AT=SCENES[SCENES.length-2].end;
+const STARS=Array.from({length:45},(_,i)=>({x:i*373%W,y:i*197%150,a:.3+(i*7%10)/14}));
+
+/* ---------- save data ---------- */
+const DEFAULTS={best:0,car:'bmw',map:'city',cust:DEFAULT_CUST,settings:{difficulty:'normal',sound:true,shake:true,intro:true,theme:'system'}};
+function merge(def,src){
+ if(!isObj(def))return src===undefined?def:src;
+ const out={};
+ for(const k in def)out[k]=merge(def[k],isObj(src)?src[k]:undefined);
+ return out;
+}
+let save;
+try{save=merge(DEFAULTS,JSON.parse(localStorage.getItem('rr_save')))}catch(e){save=merge(DEFAULTS,null)}
+try{if(!save.best)save.best=+localStorage.getItem('rr_best')||0}catch(e){}
+if(!CARS[save.car])save.car='bmw';
+if(!MAPS[save.map])save.map='city';
+function persist(){try{localStorage.setItem('rr_save',JSON.stringify(save))}catch(e){}}
+const cust=()=>save.cust[save.car];
+const diff=()=>DIFF[save.settings.difficulty]||DIFF.normal;
+
+/* ---------- colour helper: p in -100..100 ---------- */
+function shade(hex,p){
+ const n=parseInt(hex.slice(1),16);
+ const ch=v=>{const t=p<0?0:255,a=Math.abs(p)/100;return Math.round(v+(t-v)*a)};
+ const r=ch(n>>16&255),g=ch(n>>8&255),b=ch(n&255);
+ return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
+}
+
+/* ---------- drawing: background ---------- */
+function drawBackdrop(c,m,off){
+ const g=c.createLinearGradient(0,0,0,G);
+ g.addColorStop(0,m.sky[0]);g.addColorStop(1,m.sky[1]);
+ c.fillStyle=g;c.fillRect(-1000,-1000,W+2000,G+1000);
+ if(m.night){c.fillStyle='#fff';for(const s of STARS){c.globalAlpha=s.a;c.fillRect(s.x,s.y,2,2)}c.globalAlpha=1}
+ if(m.sun){c.fillStyle=m.sun.c;c.beginPath();c.arc(m.sun.x,m.sun.y,m.sun.r,0,7);c.fill()}
+ if(m.shape==='city'){
+  for(let i=0;i<10;i++){
+   const h=i*37%50,bx=wrap(i*110-off*.25,1100)-100;
+   c.fillStyle=m.far;c.fillRect(bx,G-60-h,60,60+h);
+   if(m.night){c.fillStyle='#ffd166';for(let r=0;r<3;r++)for(let k=0;k<2;k++)if((i+r+k)%3)c.fillRect(bx+10+k*22,G-50-h+r*18,8,7)}
+  }
+ }else if(m.shape==='mesa'){
+  for(let i=0;i<7;i++){
+   const x=wrap(i*170-off*.2,1190)-200,h=50+(i*53%70);
+   c.fillStyle=m.far;c.beginPath();c.moveTo(x,G);c.lineTo(x+24,G-h);c.lineTo(x+140,G-h);c.lineTo(x+164,G);c.fill();
+  }
+ }else{
+  for(let i=0;i<8;i++){
+   const x=wrap(i*140-off*.25,1120)-160,h=90+(i*71%80);
+   c.fillStyle=m.far;c.beginPath();c.moveTo(x-110,G);c.lineTo(x,G-h);c.lineTo(x+110,G);c.fill();
+   c.fillStyle='#fff';c.beginPath();c.moveTo(x-32,G-h+32);c.lineTo(x,G-h);c.lineTo(x+32,G-h+32);c.closePath();c.fill();
+  }
+ }
+ c.fillStyle=m.ground;c.fillRect(-1000,G,W+2000,H+1000);
+ c.fillStyle=m.stripe;c.fillRect(-1000,G,W+2000,3);
+ c.fillStyle=m.dash;
+ for(let i=-1;i<13;i++)c.fillRect(wrap(i*80-off,960)-80,G+32,40,4);
+}
+
+/* ---------- drawing: cars ---------- */
+function rr(c,x,y,w,h,r,f){c.fillStyle=f;c.beginPath();c.roundRect(x,y,w,h,r);c.fill()}
+function poly(c,p,f){c.fillStyle=f;c.beginPath();c.moveTo(p[0][0],p[0][1]);for(let i=1;i<p.length;i++)c.lineTo(p[i][0],p[i][1]);c.closePath();c.fill()}
+function wheel(c,x,y,r,style,rim,spin){
+ c.fillStyle='#111';c.beginPath();c.arc(x,y,r,0,7);c.fill();
+ const dark=shade(rim,-50);
+ if(style==='chrome'){
+  const g=c.createRadialGradient(x-r*.3,y-r*.3,r*.1,x,y,r*.8);
+  g.addColorStop(0,'#ffffff');g.addColorStop(.6,rim);g.addColorStop(1,dark);c.fillStyle=g;
+ }else c.fillStyle=rim;
+ c.beginPath();c.arc(x,y,r*.75,0,7);c.fill();
+ c.strokeStyle=dark;c.fillStyle=dark;c.lineCap='round';
+ const rot=(i,n)=>spin+i*Math.PI*2/n;
+ if(style==='sport'){
+  c.lineWidth=r*.2;
+  for(let i=0;i<5;i++){const q=rot(i,5);c.beginPath();c.moveTo(x+Math.cos(q)*r*.2,y+Math.sin(q)*r*.2);c.lineTo(x+Math.cos(q)*r*.68,y+Math.sin(q)*r*.68);c.stroke()}
+ }else if(style==='mesh'){
+  for(let i=0;i<8;i++){const q=rot(i,8);c.beginPath();c.arc(x+Math.cos(q)*r*.46,y+Math.sin(q)*r*.46,r*.12,0,7);c.fill()}
+  c.lineWidth=1;c.beginPath();c.arc(x,y,r*.66,0,7);c.stroke();
+ }else if(style==='turbo'){
+  c.lineWidth=1.1;
+  for(let i=0;i<10;i++){const q=rot(i,10);c.beginPath();c.moveTo(x+Math.cos(q)*r*.18,y+Math.sin(q)*r*.18);c.lineTo(x+Math.cos(q)*r*.72,y+Math.sin(q)*r*.72);c.stroke()}
+  c.beginPath();c.arc(x,y,r*.5,0,7);c.stroke();
+ }else if(style==='classic'){
+  for(let i=0;i<5;i++){const q=rot(i,5);c.beginPath();c.arc(x+Math.cos(q)*r*.45,y+Math.sin(q)*r*.45,r*.09,0,7);c.fill()}
+  c.beginPath();c.arc(x,y,r*.2,0,7);c.fill();
+ }else{
+  c.lineWidth=1.5;
+  for(let i=0;i<6;i++){const q=rot(i,6);c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(q)*r*.75,y+Math.sin(q)*r*.75);c.stroke()}
+ }
+ c.lineCap='butt';
+ c.fillStyle=style==='chrome'?dark:'#777';c.beginPath();c.arc(x,y,r*.15,0,7);c.fill();
+}
+function drawCar(c,id,cu,x,base,spin){
+ const {body,window:win,rim,wheel:style}=cu;
+ if(id==='bmw'){
+  const top=base-25;
+  rr(c,x,top,96,16,5,body);
+  poly(c,[[x+24,top],[x+38,top-17],[x+68,top-17],[x+82,top]],body);
+  poly(c,[[x+30,top],[x+41,top-13],[x+53,top-13],[x+53,top]],win);
+  poly(c,[[x+57,top],[x+57,top-13],[x+66,top-13],[x+77,top]],win);
+  rr(c,x+8,top+11,80,2,1,shade(body,-35));
+  rr(c,x+90,top+3,6,5,2,'#ffe27a');rr(c,x,top+3,5,5,2,'#d33');rr(c,x+92,top+10,4,4,1,'#111');
+  wheel(c,x+20,base-9,9,style,rim,spin);wheel(c,x+76,base-9,9,style,rim,spin);
+ }else{
+  const top=base-39;
+  rr(c,x,top,72,30,9,body);
+  rr(c,x+2,top+24,68,6,3,shade(body,-25));
+  rr(c,x+6,top+4,28,15,4,win);rr(c,x+38,top+4,26,15,4,win);
+  rr(c,x+62,top+9,6,6,2,'#ffe27a');rr(c,x,top+9,4,6,2,'#d33');
+  c.fillStyle=body;c.fillRect(x+34,top+4,4,15);
+  wheel(c,x+16,base-9,9,style,rim,spin);wheel(c,x+57,base-9,9,style,rim,spin);
+ }
+}
+function drawObs(c,o){
+ const x=o.x,b=G;
+ if(o.n==='cone'){
+  poly(c,[[x+11,b-34],[x+20,b-4],[x+2,b-4]],'#f26a1b');
+  c.fillStyle='#fff';c.fillRect(x+6,b-22,10,5);
+  rr(c,x,b-5,22,5,1,'#d9560e');
+ }else if(o.n==='barrel'){
+  rr(c,x,b-38,28,38,4,'#e0561d');
+  c.fillStyle='#fff';c.fillRect(x,b-28,28,6);c.fillRect(x,b-14,28,6);
+ }else if(o.n==='barrier'){
+  rr(c,x,b-28,50,12,2,'#fff');
+  for(let i=0;i<5;i++)poly(c,[[x+i*10,b-16],[x+i*10+5,b-28],[x+i*10+10,b-28],[x+i*10+5,b-16]],'#d33');
+  c.fillStyle='#777';c.fillRect(x+6,b-16,4,16);c.fillRect(x+40,b-16,4,16);
+ }else{
+  for(let i=0;i<2;i++)rr(c,x,b-16-i*16,32,16,7,'#222');
+  c.fillStyle='#666';for(let i=0;i<2;i++)c.fillRect(x+10,b-12-i*16,12,8);
+ }
+}
+
+/* ---------- world simulation ---------- */
+const world={speed:0,off:0,score:0,obs:[],gap:0,lift:0,vy:0};
+function resetWorld(){
+ const C=CARS[save.car],d=diff();
+ Object.assign(world,{speed:C.base*d.spd,off:0,score:0,obs:[],gap:500,lift:0,vy:0});
+}
+function spawn(C,d){
+ const T=TYPES[Math.random()*TYPES.length|0];
+ world.obs.push({n:T.n,w:T.w,h:T.h,x:W+20});
+ if(Math.random()<.25&&world.speed>380)world.obs.push({n:'cone',w:22,h:34,x:W+20+T.w+14});
+ world.gap=(world.speed*(.75+Math.random()*.7)+C.w+60)*d.gap;
+}
+function collide(C,cx,cw){
+ const top=G-world.lift-C.hitH;
+ for(const o of world.obs){
+  if(cx+cw-4>o.x+3&&cx+4<o.x+o.w-3&&G-world.lift>G-o.h+4&&top<G)return true;
+ }
+ return false;
+}
+function autopilot(cx,cw){ // only used for the cutscene and menu backdrop
+ if(world.lift>0)return;
+ let nxt=null;
+ for(const o of world.obs)if(o.x+o.w>cx&&(!nxt||o.x<nxt.x))nxt=o;
+ if(!nxt)return;
+ const ttc=(nxt.x-(cx+cw))/world.speed;
+ if(ttc>.02&&ttc<.11)world.vy=CARS[save.car].jump;
+}
+function simulate(dt,demo){
+ const C=CARS[save.car],d=diff(),cx=84,cw=C.hitW;
+ world.speed=Math.min(1100,world.speed+C.acc*d.spd*dt);
+ world.off+=world.speed*dt;
+ if(!demo)world.score+=world.speed*dt/12;
+ world.vy-=C.grav*dt;world.lift+=world.vy*dt;
+ if(world.lift<=0){world.lift=0;world.vy=0}
+ world.gap-=world.speed*dt;
+ if(world.gap<=0)spawn(C,d);
+ for(const o of world.obs)o.x-=world.speed*dt;
+ world.obs=world.obs.filter(o=>o.x>-80);
+ if(demo)autopilot(cx,cw);
+ else if(collide(C,cx,cw))crash();
+}
+
+/* ---------- audio ---------- */
+let actx=null;
+function sfx(kind){
+ if(!save.settings.sound)return;
+ try{
+  actx=actx||new(window.AudioContext||window.webkitAudioContext)();
+  const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+  if(kind==='jump'){o.type='square';o.frequency.setValueAtTime(260,t);o.frequency.exponentialRampToValueAtTime(620,t+.15);g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);o.stop(t+.22)}
+  else{o.type='sawtooth';o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(30,t+.5);g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.6);o.stop(t+.62)}
+  o.connect(g);g.connect(actx.destination);o.start(t);
+ }catch(e){}
+}
+
+/* ---------- game states ---------- */
+let mode='intro',panel=null,shake=0,last=0,gOff=0,gT=0;
+const cine={t:0,scene:-1,cam:{s:1,fx:.16},ts:1};
+const vig=ctx.createRadialGradient(W/2,H/2,H*.4,W/2,H/2,W*.65);
+vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(0,0,0,.5)');
+
+function setMode(m){
+ mode=m;
+ hudBtns.hidden=!(m==='play'||m==='paused'||m==='over');
+ bp.hidden=m==='over';
+ bp.textContent=m==='paused'?'▶ Resume':'⏸ Pause';
+}
+function updateBest(){$('best').textContent='BEST '+pad(save.best)}
+const PANELS=['menu','garage','maps','settings'];
+function showPanel(name){
+ panel=name;
+ for(const id of PANELS)$(id).hidden=id!==name;
+ if(name==='garage')renderGarage();
+ if(name==='maps')buildMaps();
+ if(name==='settings')syncSettings();
+ updateBest();
+}
+function hidePanels(){panel=null;for(const id of PANELS)$(id).hidden=true}
+function toMenu(){setMode('menu');resetWorld();showPanel('menu')}
+function start(){setMode('play');resetWorld();hidePanels()}
+function togglePause(){
+ if(mode==='play')setMode('paused');
+ else if(mode==='paused')setMode('play');
+}
+function jump(){
+ if(mode==='play'&&world.lift<=0){world.vy=CARS[save.car].jump;sfx('jump')}
+}
+function crash(){
+ setMode('over');sfx('crash');
+ if(save.settings.shake)shake=16;
+ const s=Math.floor(world.score);
+ if(s>save.best){save.best=s;persist()}
+ updateBest();
+}
+function action(){
+ if(mode==='menu'){if(panel==='menu')start()}
+ else if(mode==='play')jump();
+ else if(mode==='paused')togglePause();
+ else if(mode==='over')start();
+}
+function pickCar(id){
+ if(mode!=='menu'||!CARS[id])return;
+ save.car=id;persist();resetWorld();
+ if(panel==='garage')renderGarage();
+}
+
+/* ---------- cutscene ---------- */
+function startIntro(){
+ setMode('intro');hidePanels();
+ cine.t=0;cine.scene=-1;cine.cam={s:1,fx:SCENES[0].fx};cine.ts=1;
+ document.body.classList.add('cine');
+ resetWorld();window.scrollTo(0,0);
+}
+function endIntro(){
+ if(mode!=='intro')return;
+ document.body.classList.remove('cine');
+ $('cap').innerHTML='';
+ toMenu();
+}
+function skipIntro(){
+ if(mode!=='intro')return;
+ if(cine.t<TITLE_AT){cine.t=TITLE_AT;cine.scene=-1}
+ else endIntro();
+}
+function setCap(html,big){const el=$('cap');el.className=big?'big':'';el.innerHTML=html;void el.offsetWidth;el.classList.add('in')}
+function flash(){const f=$('flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go')}
+function updateCine(dt){
+ cine.t+=dt;
+ let i=0;while(i<SCENES.length-1&&cine.t>=SCENES[i].end)i++;
+ const S=SCENES[i];
+ if(i!==cine.scene){cine.scene=i;setCap(S.cap,S.big);if(S.fl)flash()}
+ const k=Math.min(1,dt*3);
+ cine.cam.s+=(S.z-cine.cam.s)*k;
+ cine.cam.fx+=(S.fx-cine.cam.fx)*k;
+ cine.ts+=(S.ts-cine.ts)*Math.min(1,dt*2);
+}
+
+/* ---------- garage ---------- */
+function renderGarage(){
+ document.querySelectorAll('[data-car]').forEach(b=>b.classList.toggle('sel',b.dataset.car===save.car));
+ document.querySelectorAll('[data-wheel]').forEach(b=>b.classList.toggle('sel',b.dataset.wheel===cust().wheel));
+ buildSwatches($('sw-body'),'body',BODY_COLORS);
+ buildSwatches($('sw-window'),'window',WINDOW_COLORS);
+ buildSwatches($('sw-rim'),'rim',RIM_COLORS);
+}
+function setCust(key,val){cust()[key]=val;persist();renderGarage()}
+function buildSwatches(el,key,colors){
+ const cur=cust()[key].toLowerCase();
+ el.innerHTML='';
+ for(const col of colors){
+  const b=document.createElement('button');
+  b.className='sw'+(col===cur?' sel':'');
+  b.style.background=col;b.title=col;b.setAttribute('aria-label',col);
+  b.onclick=()=>setCust(key,col);
+  el.appendChild(b);
+ }
+ const inp=document.createElement('input');
+ inp.type='color';inp.value=cur;inp.title='Custom color';
+ inp.oninput=()=>{cust()[key]=inp.value;persist()};
+ inp.onchange=renderGarage;
+ el.appendChild(inp);
+}
+function drawGarage(dt){
+ gT+=dt;gOff+=260*dt;
+ const C=CARS[save.car];
+ gctx.setTransform(1,0,0,1,0,0);
+ drawBackdrop(gctx,MAPS[save.map],gOff);
+ gctx.setTransform(2,0,0,2,W/2-C.w,-G); // zoom x2, car centred, base on road line
+ drawCar(gctx,save.car,cust(),0,G,gOff/9);
+ gctx.setTransform(1,0,0,1,0,0);
+}
+
+/* ---------- maps ---------- */
+function buildMaps(){
+ const g=$('maps-grid');g.innerHTML='';
+ for(const id in MAPS){
+  const m=MAPS[id],b=document.createElement('button');
+  b.className='card'+(id===save.map?' sel':'');
+  b.dataset.map=id;
+  const c=document.createElement('canvas');c.width=W;c.height=H;
+  drawThumb(c,id);
+  const t=document.createElement('b');t.textContent=m.name;
+  const s=document.createElement('small');s.textContent=m.desc;
+  b.append(c,t,s);g.appendChild(b);
+ }
+}
+function drawThumb(cvs,id){
+ const c=cvs.getContext('2d'),s=1.6,C=CARS[save.car];
+ c.setTransform(1,0,0,1,0,0);
+ drawBackdrop(c,MAPS[id],0);
+ c.setTransform(s,0,0,s,W/2-s*(260+C.w/2),(1-s)*G);
+ drawCar(c,save.car,cust(),260,G,0);
+ c.setTransform(1,0,0,1,0,0);
+}
+
+/* ---------- settings ---------- */
+function syncSettings(){
+ document.querySelectorAll('[data-set]').forEach(b=>{
+  const cur=save.settings[b.dataset.set],want=b.dataset.val;
+  const ok=typeof cur==='boolean'?(want==='on')===cur:cur===want;
+  b.classList.toggle('sel',ok);
+ });
+}
+function applySettings(){
+ const th=save.settings.theme;
+ if(th==='light'||th==='dark')document.documentElement.setAttribute('data-theme',th);
+ else document.documentElement.removeAttribute('data-theme');
+}
+
+/* ---------- drawing: frame ---------- */
+function drawHUD(){
+ const m=MAPS[save.map];
+ ctx.fillStyle=m.text;ctx.font='bold 16px monospace';ctx.textAlign='right';
+ ctx.fillText('HI '+pad(save.best)+'  '+pad(world.score),W-14,24);
+ ctx.textAlign='center';
+ if(mode==='paused'){
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff';ctx.font='bold 30px system-ui';ctx.fillText('PAUSED',W/2,110);
+  ctx.font='16px system-ui';ctx.fillText('Press P, Esc, Space or tap to resume',W/2,140);
+ }
+ if(mode==='over'){
+  ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff';ctx.font='bold 26px system-ui';ctx.fillText('CRASH! Score '+Math.floor(world.score),W/2,100);
+  ctx.font='16px system-ui';ctx.fillText('Tap or press Space to retry',W/2,130);
+ }
+}
+function render(){
+ let s=1,tx=0,ty=0;
+ if(mode==='intro'){s=cine.cam.s;tx=W*cine.cam.fx-s*128;ty=(1-s)*G}
+ if(shake>.5){tx+=(Math.random()-.5)*shake;ty+=(Math.random()-.5)*shake;shake*=.88}else shake=0;
+ ctx.setTransform(s,0,0,s,tx,ty);
+ drawBackdrop(ctx,MAPS[save.map],world.off);
+ for(const o of world.obs)drawObs(ctx,o);
+ drawCar(ctx,save.car,cust(),80,G-world.lift,world.off/9);
+ ctx.setTransform(1,0,0,1,0,0);
+ if(mode==='intro'||mode==='menu'){ctx.fillStyle=vig;ctx.fillRect(0,0,W,H)}
+ if(mode==='menu'){ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,0,W,H)}
+ if(mode==='play'||mode==='paused'||mode==='over')drawHUD();
+}
+function frame(ts){
+ const dt=Math.min(.033,(ts-last)/1000||0);last=ts;
+ if(mode==='intro'){updateCine(dt);simulate(dt*cine.ts,true)}
+ else if(mode==='menu')simulate(dt,true);
+ else if(mode==='play')simulate(dt,false);
+ if(mode==='menu'&&panel==='garage')drawGarage(dt);
+ render();
+ requestAnimationFrame(frame);
+}
+
+/* ---------- input ---------- */
+document.addEventListener('click',e=>{
+ const t=e.target.closest('button');if(!t)return;
+ t.blur();
+ const d=t.dataset;
+ if(d.go)showPanel(d.go);
+ else if(d.back!==undefined)showPanel('menu');
+ else if(d.car)pickCar(d.car);
+ else if(d.map){save.map=d.map;persist();buildMaps()}
+ else if(d.wheel)setCust('wheel',d.wheel);
+ else if(d.set){
+  let v=d.val;if(v==='on')v=true;else if(v==='off')v=false;
+  save.settings[d.set]=v;persist();applySettings();syncSettings();
+ }
+});
+$('m-play').onclick=start;
+bp.onclick=togglePause;
+$('bm').onclick=toMenu;
+$('skip').onclick=endIntro;
+$('set-replay').onclick=startIntro;
+$('g-reset').onclick=()=>{save.cust[save.car]=clone(DEFAULT_CUST[save.car]);persist();renderGarage()};
+$('set-rbest').onclick=()=>{if(confirm('Reset your best score?')){save.best=0;persist();updateBest()}};
+$('set-rall').onclick=()=>{
+ if(confirm('Reset garage colors, wheels and map to default?')){
+  save.cust=clone(DEFAULT_CUST);save.map='city';persist();buildMaps();renderGarage();
+ }
+};
+cv.addEventListener('pointerdown',e=>{
+ e.preventDefault();
+ if(mode==='intro')skipIntro();else action();
+});
+addEventListener('keydown',e=>{
+ if(mode==='intro'){
+  if(!e.repeat)skipIntro();
+  if(e.code==='Space')e.preventDefault();
+  return;
+ }
+ const onBtn=e.target.tagName==='BUTTON';
+ if(e.code==='Space'||e.code==='ArrowUp'){
+  if(onBtn&&mode!=='play')return;
+  e.preventDefault();
+  if(!e.repeat)action();
+ }else if(e.code==='KeyP'||e.code==='Escape'){
+  if(mode==='play'||mode==='paused')togglePause();
+  else if(mode==='over')toMenu();
+  else if(mode==='menu'&&panel!=='menu')showPanel('menu');
+ }else if(e.code==='Digit1')pickCar('bmw');
+ else if(e.code==='Digit2')pickCar('cube');
+});
+addEventListener('blur',()=>{if(mode==='play')togglePause()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='play')togglePause()});
+
+/* ---------- boot ---------- */
+applySettings();updateBest();
+if(save.settings.intro)startIntro();else toMenu();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
